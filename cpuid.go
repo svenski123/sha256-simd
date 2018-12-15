@@ -21,6 +21,7 @@ var avx2 = haveAVX2()
 var avx = haveAVX()
 var ssse3 = haveSSSE3()
 var armSha = haveArmSha()
+var intelSha = haveIntelSha()
 
 // haveAVX returns true when there is AVX support
 func haveAVX() bool {
@@ -90,4 +91,10 @@ func haveSSSE3() bool {
 	_, _, c, _ := cpuid(1)
 
 	return (c & 0x00000200) != 0
+}
+
+// haveIntelSha returns true when there is SHA support
+func haveIntelSha() bool {
+	_, b, _, _ := cpuidex(7, 0)
+	return b&(1<<29) != 0
 }

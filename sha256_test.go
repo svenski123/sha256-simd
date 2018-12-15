@@ -2208,6 +2208,15 @@ var golden = []sha256Test{
 }
 
 func TestGolden(t *testing.T) {
+	if intelSha {
+		for _, g := range golden {
+			s := fmt.Sprintf("%x", Sum256([]byte(g.in)))
+			if Sum256([]byte(g.in)) != g.out {
+				t.Fatalf("AVX2: Sum256 function: sha256(%s) = %s want %s", g.in, s, hex.EncodeToString(g.out[:]))
+			}
+		}
+		intelSha = false
+	}
 	if avx2 {
 		for _, g := range golden {
 			s := fmt.Sprintf("%x", Sum256([]byte(g.in)))
@@ -2250,7 +2259,8 @@ func TestBlockSize(t *testing.T) {
 	}
 }
 
-func benchmarkSize(b *testing.B, size int) {
+func benchmarkSize(b *testing.B, size int, intelShaEnabled bool) {
+	intelSha = intelShaEnabled
 	var bench = New()
 	var buf = make([]byte, size)
 	b.SetBytes(int64(size))
@@ -2261,10 +2271,22 @@ func benchmarkSize(b *testing.B, size int) {
 		bench.Sum(sum[:0])
 	}
 }
+ 
 
-func BenchmarkHash8Bytes(b *testing.B)  { benchmarkSize(b, 8) }
-func BenchmarkHash1K(b *testing.B)      { benchmarkSize(b, 1024) }
-func BenchmarkHash8K(b *testing.B)      { benchmarkSize(b, 8192) }
-func BenchmarkHash1MAvx2(b *testing.B)  { benchmarkSize(b, 1024*1024) }
-func BenchmarkHash5MAvx2(b *testing.B)  { benchmarkSize(b, 5*1024*1024) }
-func BenchmarkHash10MAvx2(b *testing.B) { benchmarkSize(b, 10*1024*1024) }
+func BenchmarkHash8Bytes(b *testing.B)  { benchmarkSize(b, 8, false) }
+func BenchmarkHash8BytesIntelSHA(b *testing.B)  { benchmarkSize(b, 8, true) }
+
+func BenchmarkHash1K(b *testing.B)      { benchmarkSize(b, 1024, false) }
+func BenchmarkHash1KIntelSHA(b *testing.B)      { benchmarkSize(b, 1024, true) }
+
+func BenchmarkHash8K(b *testing.B)      { benchmarkSize(b, 8192, false) }
+func BenchmarkHash8KIntelSHA(b *testing.B)      { benchmarkSize(b, 8192, true) }
+
+func BenchmarkHash1MAvx2(b *testing.B)  { benchmarkSize(b, 1024*1024, false) }
+func BenchmarkHash1MIntelSHA(b *testing.B)  { benchmarkSize(b, 1024*1024, true) }
+
+func BenchmarkHash5MAvx2(b *testing.B)  { benchmarkSize(b, 5*1024*1024, false) }
+func BenchmarkHash5MIntelSHA(b *testing.B)  { benchmarkSize(b, 5*1024*1024, true) }
+
+func BenchmarkHash10MAvx2(b *testing.B) { benchmarkSize(b, 10*1024*1024, false) }
+func BenchmarkHash10MIntelSHA(b *testing.B) { benchmarkSize(b, 10*1024*1024, true) }

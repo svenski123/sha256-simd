@@ -69,6 +69,8 @@ func block(dig *digest, p []byte) {
 		blockGeneric(dig, p)
 	}
 	switch !is386bit && !isARM {
+	case intelSha:
+		blockIntelShaGo(dig, p)
 	case avx2:
 		blockAvx2Go(dig, p)
 	case avx:
@@ -84,7 +86,7 @@ func block(dig *digest, p []byte) {
 
 // New returns a new hash.Hash computing the SHA256 checksum.
 func New() hash.Hash {
-	if avx2 || avx || ssse3 || armSha {
+	if avx2 || avx || ssse3 || armSha || intelSha {
 		d := new(digest)
 		d.Reset()
 		return d
